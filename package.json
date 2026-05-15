@@ -1,0 +1,41 @@
+{
+  "name": "@jecruz/hew",
+  "version": "1.0.0",
+  "description": "Hew — a disciplined, checkpointed development workflow for AI coding agents. Install once, use with any CLI.",
+  "bin": {
+    "hew-install": "bin/install.js"
+  },
+  "files": [
+    "bin",
+    "SKILL.md"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "codex",
+    "codex-cli",
+    "pi",
+    "pi-coding-agent",
+    "hermes",
+    "workflow",
+    "tdd",
+    "code-review",
+    "automation",
+    "pipeline",
+    "ai-agent",
+    "skill"
+  ],
+  "author": "Jeffrey Cruz <jcruz@artfulreflections.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jecruz/hew.git"
+  },
+  "homepage": "https://github.com/jecruz/hew#readme",
+  "bugs": {
+    "url": "https://github.com/jecruz/hew/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

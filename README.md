@@ -2,12 +2,38 @@
 
 > **hew** /hyo͞o/ — *v.* to shape or form with decisive, deliberate strikes. To conform, adhere, or hold true to a standard.
 
-A disciplined, checkpointed development workflow for AI coding agents. Hew guides an agent through five phases — questions, research, planning, context, build — with human checkpoints, domain-aware code review, and coverage gates. No shell scripts. The agent follows the instructions inline.
+A disciplined, checkpointed development workflow for AI coding agents. Hew guides an agent through five phases — questions, research, planning, context, build — with human checkpoints, domain-aware code review, and coverage gates.
 
-## Quick Install
+**Works with any CLI.** One install, use everywhere.
+
+## Install
 
 ```bash
+# npm (global)
+npm install -g @jecruz/hew
+hew-install --claude --codex --pi --hermes --all
+
+# Or just for Claude
+hew-install --claude
+
+# Or from git
 git clone https://github.com/jecruz/hew.git /tmp/hew && bash /tmp/hew/install.sh
+```
+
+### Supported CLIs
+
+| Flag | Target |
+|------|--------|
+| `--claude` | Claude Code (`~/.claude/skills/hew/`) |
+| `--codex` | Codex CLI (`~/.codex/skills/hew/`) |
+| `--pi` | Pi (`~/.pi/agent/extensions/hew.js`) |
+| `--hermes` | Hermes (`~/.hermes/skills/hew/`) |
+| `--all` | All of the above |
+
+```bash
+hew-install --global --claude        # Global install for Claude
+hew-install --local --codex           # Project-local for Codex
+hew-install --uninstall --claude      # Remove
 ```
 
 ## Usage
