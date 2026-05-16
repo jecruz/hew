@@ -1,6 +1,6 @@
 ---
 name: hew
-description: Hew — deterministic 5-phase workflow with Three Mind checkpoints, domain-aware review, and coverage gates. Activate with /hew or when the user says "build this", "make this", "implement this", "get this done".
+description: Hew — deterministic 5-phase workflow with Three Mind checkpoints, domain-aware review, code review gates, and coverage gates. Activate with /hew or when the user says "build this", "make this", "implement this", "get this done".
 ---
 
 # Hew
@@ -24,9 +24,9 @@ Five phases. External verifiers. Human checkpoints. One task, one commit.
 
 | Mode | Pipeline | Gate |
 |------|----------|------|
-| default | Write → Test → Review → Fix → Verify → Done | Coverage ≥80% |
+| default | Write → Test → Domain Review → Code Review → Fix → Re-verify → Done | 0 BLOCKERs, Coverage ≥80% |
 | quick | Write → Test → Verify → Done | None |
-| strict | Write → Test → Review → Fix → Verify → Done | Coverage ≥90% |
+| strict | Write → Test → Domain Review → Code Review → Fix → Re-verify → Done | 0 BLOCKERs, Coverage ≥90% |
 
 ## Phases
 
@@ -56,17 +56,18 @@ Execute tasks from ROADMAP using the pipeline for the current mode. **Default: 5
 
 For each task:
 ```
-1. Write   — implement the task + tests
-2. Test    — run test suite (exit 0 = pass)
-3. Review  — domain-aware checklist (skip in quick mode)
-4. Fix     — address review findings, return to Test
-5. Verify  — type-check + lint + coverage (gate: see mode)
-6. Done    — commit and move to next task
+1. Write         — implement the task + tests
+2. Test          — run test suite (exit 0 = pass). If fail → fix → retest until green
+3. Domain Review — keyword-aware checklist (skip in quick mode)
+4. Code Review   — severity-classified review of changed files only (skip in quick mode)
+5. Fix           — address all BLOCKER findings. WARNINGs noted for backlog
+6. Re-verify     — type-check + test + lint + coverage (gate: see mode). Must pass
+7. Done          — commit and move to next task
 ```
 
 After every 5 tasks (or `--limit N`): run a **Three Mind checkpoint**.
 
-### Domain-Aware Review (Phase 5, Review stage)
+### Domain Review (Phase 5, Stage 3)
 
 Detect spec keywords and inject relevant checklist items:
 
@@ -78,6 +79,35 @@ Detect spec keywords and inject relevant checklist items:
 | async, promise, await | Async: error propagation, unhandled rejections, cancellation |
 | ui, component, render, dom | UI: a11y, loading/empty/error states, responsive breakpoints |
 | db, database, sql, query | Data: injection, transactions, connection pooling, migrations |
+
+### Code Review (Phase 5, Stage 4)
+
+Review only the changed files (diff-only). Classify every finding by severity:
+
+| Severity | Icon | Rule |
+|----------|------|------|
+| **BLOCKER** | 🔴 | Must fix before commit. Bugs, security holes, broken logic. |
+| **WARNING** | 🟡 | Should fix. Code smells, magic numbers, poor naming. Deferred to backlog. |
+| **INFO** | 🔵 | Consider. Missing docs, optimization opportunities. Optional. |
+
+General review checklist:
+- Error handling: every promise/call has a catch or propagates
+- Naming: variables, functions, files are clear and idiomatic
+- DRY: no copy-pasted logic within the diff
+- Dead code: no unreachable branches or unused imports
+- Types: no `any` without justification, no unsafe casts
+- Logging: errors are logged, not swallowed
+- Tests: new logic has corresponding test coverage
+
+Output format:
+```
+🔍 Code Review — 3 files changed
+🔴 BLOCKER — src/bot.ts:42 — unhandled promise in streamResponse
+🟡 WARNING — src/db.ts:15 — magic number 4096, extract to constant
+🔵 INFO — src/main.ts — consider adding startup health check
+```
+
+**Gate: 0 BLOCKERs required before commit.** If BLOCKERs exist, fix them and re-run Re-verify.
 
 ## Three Mind Checkpoint
 
@@ -99,8 +129,6 @@ Then offer:
 
 ## Completion Banner
 
-When the workflow finishes, output this format:
-
 ```
 ✅ <project-name> is complete
 
@@ -113,8 +141,6 @@ Linked: fixes #42, closes RM-123
 
 ## Failure: POSTMORTEM
 
-If the build fails after max iterations (no convergence), generate:
-
 ```
 ## ⚠️ Workflow Failed — Post-Mortem
 
@@ -123,7 +149,7 @@ If the build fails after max iterations (no convergence), generate:
 
 ### Timeline
 - ✅ Write: ...
-- ❌ Review: ...
+- ❌ Code Review: 2 BLOCKERs unresolved
 
 ### Root Cause
 Last failure: **<stage>** — <detail>
@@ -131,7 +157,7 @@ Last failure: **<stage>** — <detail>
 
 ## Verifiers
 
-Run on every commit. Detect the project's stack and use the right tools:
+Detect the project's stack and use the right tools:
 
 ```
 1. Type-check  (tsc, mypy, rustc --check, go build, etc.)
@@ -154,8 +180,6 @@ Run on every commit. Detect the project's stack and use the right tools:
 
 ## Git Commits
 
-Structured prefixes per stage:
-
 ```
 wip: <project> — <task description>
 test: <project> — all passing
@@ -167,8 +191,9 @@ chore: <project> — workflow complete
 
 | Anti-Pattern | How |
 |--------------|-----|
-| AI judges its own output | External verifiers decide pass/fail |
+| AI judges its own output | External verifiers + code review decide pass/fail |
 | Scope creep | Questions phase + human gate after planning |
-| Unverified code shipped | Verifier loop before every commit |
+| Unverified code shipped | Verifier loop + 0 BLOCKER gate before every commit |
 | Drift from requirements | Strategic Mind flags misalignment |
 | No failure trace | POSTMORTEM captures timeline + root cause |
+| Silent bugs merged | Code review catches logic errors before commit |
